@@ -1,8 +1,11 @@
 <?php
 
-namespace Box2d\Common;
+namespace Box2d\src\Common;
 
 
+use Box2d\Common\Joint;
+use Box2d\Common\Timer;
+use Box2d\Common\TimeStep;
 use Box2d\Common\Math\Vec2;
 use Box2d\Common\TimeStep\Profile;
 use Box2d\Dynamics\Body;
@@ -11,6 +14,33 @@ use Box2d\Dynamics\ContactManager;
 use Box2d\Dynamics\WorldCallbacks\ContactFilterInterface;
 use Box2d\Dynamics\WorldCallbacks\ContactListenerInterface;
 use Webmozart\Assert\Assert;
+use function Box2d\Common\ClearForces;
+use function Box2d\Common\Collide;
+use function Box2d\Common\GetMilliseconds;
+use function Box2d\Common\Solve;
+use function Box2d\Common\SolveTOI;
+use const Box2d\Common\b2Timer;
+use const Box2d\Common\collide;
+use const Box2d\Common\dt;
+use const Box2d\Common\dtRatio;
+use const Box2d\Common\f;
+use const Box2d\Common\inv_dt;
+use const Box2d\Common\m_clearForces;
+use const Box2d\Common\m_contactManager;
+use const Box2d\Common\m_continuousPhysics;
+use const Box2d\Common\m_inv_dt0;
+use const Box2d\Common\m_locked;
+use const Box2d\Common\m_profile;
+use const Box2d\Common\m_stepComplete;
+use const Box2d\Common\m_warmStarting;
+use const Box2d\Common\positionIterations;
+use const Box2d\Common\solve;
+use const Box2d\Common\solveTOI;
+use const Box2d\Common\step;
+use const Box2d\Common\stepTimer;
+use const Box2d\Common\timer;
+use const Box2d\Common\velocityIterations;
+use const Box2d\Common\warmStarting;
 
 class World
 {

@@ -11,6 +11,10 @@ namespace Box2d\Dynamics\WorldCallbacks;
 /// You should strive to make your callbacks efficient because there may be
 /// many callbacks per time step.
 /// @warning You cannot create/destroy Box2D entities inside these callbacks.
+use Box2d\Dynamics\WorldCallbacks\Contact;
+use Box2d\Dynamics\WorldCallbacks\ContactImpulse;
+use Box2d\Dynamics\WorldCallbacks\Manifold;
+
 interface ContactListenerInterface
 {
     /// Called when two fixtures begin to touch.

@@ -13,7 +13,6 @@ namespace Box2d\Collision\DynamicTree;
 /// Nodes are pooled and relocatable, so we use node indices rather than pointers.
 use Box2d\Collision\Collision\AABB;
 use Box2d\Common\Math\Math;
-use Box2d\Common\Math\Vec2;
 use Box2d\Common\Settings;
 use Webmozart\Assert\Assert;
 

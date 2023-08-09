@@ -3,6 +3,7 @@
 namespace Box2d\Collision\BroadPhase;
 
 
+use Box2d\Collision\BroadPhase\Pair;
 use Box2d\Collision\Collision\AABB;
 use Box2d\Collision\DynamicTree\DynamicTree;
 

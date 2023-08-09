@@ -18,7 +18,7 @@ namespace Box2d\Collision\Collision;
 /// account for movement, which is critical for continuous physics.
 /// All contact scenarios must be expressed in one of these types.
 /// This structure is stored across time steps, so we keep it small.
-use Box2d\Common\Math\Vec2;
+use Box2d\src\Common\Math\Vec2;
 
 class Manifold
 {

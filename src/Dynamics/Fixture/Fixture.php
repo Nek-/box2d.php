@@ -3,6 +3,7 @@
 namespace Box2d\Dynamics\Fixture;
 
 
+use Box2d\Dynamics\Fixture\Filter;
 use Box2d\Collision\BroadPhase\BroadPhase;
 use Box2d\Collision\Shape\MassData;
 use Box2d\Collision\Shape\Shape;
@@ -10,6 +11,12 @@ use Box2d\Common\Math\Transform;
 use Box2d\Dynamics\Body;
 use Webmozart\Assert\Assert;
 
+
+/// A fixture is used to attach a shape to a body for collision detection. A fixture
+/// inherits its transform from its parent. Fixtures hold additional non-geometric data
+/// such as friction, collision filters, etc.
+/// Fixtures are created via b2Body::CreateFixture.
+/// @warning you cannot reuse fixtures.
 class Fixture
 {
     /*protected*/public ?Body $body;
@@ -104,5 +111,6 @@ class Fixture
 
     }
 
+    // TODO
 
 }

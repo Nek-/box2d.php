@@ -1,6 +1,6 @@
 <?php
 
-namespace Box2d\Collision\DynamicTree;
+namespace Box2d\src\Collision\DynamicTree;
 
 
 use Box2d\Collision\Collision\AABB;

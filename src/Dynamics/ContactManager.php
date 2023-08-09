@@ -3,6 +3,7 @@
 namespace Box2d\Dynamics;
 
 
+use Box2d\Dynamics\Contact;
 use Box2d\Collision\BroadPhase\BroadPhase;
 use Box2d\Dynamics\WorldCallbacks\ContactFilter;
 use Box2d\Dynamics\WorldCallbacks\ContactFilterInterface;

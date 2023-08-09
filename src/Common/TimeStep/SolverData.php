@@ -3,6 +3,7 @@
 namespace Box2d\Common\TimeStep;
 
 /// Solver Data
+
 class SolverData
 {
     public TimeStep $step;

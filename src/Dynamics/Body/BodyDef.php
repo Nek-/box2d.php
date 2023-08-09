@@ -1,23 +1,16 @@
 <?php
 
-namespace Box2d\Dynamics;
+namespace Box2d\src\Dynamics;
 
 
 use Box2d\Common\Math\Vec2;
+use Box2d\Dynamics\BodyType;
 
 class BodyDef
 {
-    /// The body type.
-    /// static: zero mass, zero velocity, may be manually moved
-    /// kinematic: zero mass, non-zero velocity set by user, moved by solver
-    /// dynamic: positive mass, non-zero velocity determined by forces, moved by solver
-    public const TYPE_STATIC_BODY = 0;
-    public const TYPE_KINEMATIC_BODY = 1;
-    public const TYPE_DYNAMIC_BODY = 2;
-
     /// The body type: static, kinematic, or dynamic.
     /// Note: if a dynamic body would have zero mass, the mass is set to one.
-    public int $type;
+    public BodyType $type;
 
     /// The world position of the body. Avoid creating bodies at the origin
     /// since this can lead to many overlapping shapes.
@@ -48,6 +41,7 @@ class BodyDef
     /// this increases CPU usage.
     public bool $allowSleep;
 
+    /// The world angle of the body in radians.
     /// Is this body initially awake or sleeping?
     public bool $awake;
 
@@ -83,7 +77,8 @@ class BodyDef
         $this->awake = true;
         $this->fixedRotation = false;
         $this->bullet = false;
-        $this->type = self::TYPE_STATIC_BODY;
+        $this->type = BodyType::TYPE_STATIC_BODY;
+        $this->enabled = true;
         $this->gravityScale = 1;
     }
 }

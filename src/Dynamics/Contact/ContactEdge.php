@@ -1,6 +1,6 @@
 <?php
 
-namespace Box2d\Dynamics\Contact;
+namespace Box2d\src\Dynamics\Contact;
 
 
 use Box2d\Dynamics\Body;

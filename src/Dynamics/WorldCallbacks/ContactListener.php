@@ -3,6 +3,8 @@
 namespace Box2d\Dynamics\WorldCallbacks;
 
 
+use Box2d\Dynamics\WorldCallbacks\ContactImpulse;
+use Box2d\Dynamics\WorldCallbacks\Manifold;
 use Box2d\Dynamics\Contact\Contact;
 
 class ContactListener implements ContactListenerInterface

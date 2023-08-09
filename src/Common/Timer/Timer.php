@@ -3,6 +3,9 @@
 namespace Box2d\Common\Timer;
 
 
+use function Box2d\Common\Timer\QueryPerformanceCounter;
+use function Box2d\Common\Timer\QueryPerformanceFrequency;
+
 class Timer
 {
     private static float $invFrequency = 0.0;

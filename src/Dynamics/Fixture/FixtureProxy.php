@@ -5,6 +5,7 @@ namespace Box2d\Dynamics\Fixture;
 
 use Box2d\Collision\Collision\AABB;
 
+/// This proxy is used internally to connect fixtures to the broad-phase.
 class FixtureProxy
 {
     public AABB $aabb;
@@ -12,8 +13,8 @@ class FixtureProxy
     public int $childIndex;
     public $proxyId;
 
-    public function __construct()
+    public function __construct(AABB $aabb)
     {
-        $this->aabb = new AABB();
+        $this->aabb = $aabb;
     }
 }
