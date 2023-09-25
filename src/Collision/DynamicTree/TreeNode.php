@@ -1,6 +1,6 @@
 <?php
 
-namespace Box2d\src\Collision\DynamicTree;
+namespace Box2d\Collision\DynamicTree;
 
 
 use Box2d\Collision\Collision\AABB;
@@ -15,15 +15,17 @@ class TreeNode
     public int $child1;
     public int $child2;
     public int $parent;
+    public int $next;
 
     // leaf = 0, free node = -1
     public int $height;
 
     public bool $moved;
 
-    public function __clone()
+    public function __construct()
     {
         $this->parent = DynamicTree::NULL_NODE;
+        $this->next = DynamicTree::NULL_NODE;
         $this->child1 = DynamicTree::NULL_NODE;
         $this->child2 = DynamicTree::NULL_NODE;
         $this->height = 0;

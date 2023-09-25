@@ -12,10 +12,17 @@ namespace Box2d\Collision\DynamicTree;
 ///
 /// Nodes are pooled and relocatable, so we use node indices rather than pointers.
 use Box2d\Collision\Collision\AABB;
+use Box2d\Collision\Collision\RayCastInput;
 use Box2d\Common\Math\Math;
+use Box2d\Common\Math\Vec2;
 use Box2d\Common\Settings;
 use Webmozart\Assert\Assert;
+use function Box2d\Collision\b2TestOverlap;
+use function Box2d\Common\Cross;
 
+/**
+ * @template T
+ */
 class DynamicTree
 {
     public const NULL_NODE = -1;
@@ -354,6 +361,160 @@ class DynamicTree
         }
 
         return $iA;
+    }
+
+
+    /// Move a proxy with a swepted AABB. If the proxy has moved outside of its fattened AABB,
+    /// then the proxy is removed from the tree and re-inserted. Otherwise
+    /// the function returns immediately.
+    /// @return true if the proxy was re-inserted.
+    public function MoveProxy(int $proxyId, AABB $aabb1, Vec2 $displacement): bool
+    {
+        // TODO
+    }
+
+
+    /// Get proxy user data.
+    /// @return the proxy user data or 0 if the id is invalid.
+    public function GetUserData(int $proxyId):mixed
+    {
+        Assert::true(0 <= $proxyId && $proxyId < count($this->nodes));
+
+        return $this->nodes[$proxyId]->userData;
+    }
+
+    public function WasMoved(int $proxyId): bool
+    {
+        Assert::true(0 <= $proxyId && $proxyId < count($this->nodes));
+        return $this->nodes[$proxyId]->moved;
+    }
+
+    public function ClearMoved(int $proxyId): void
+    {
+        Assert::true(0 <= $proxyId && $proxyId < count($this->nodes));
+        $this->nodes[$proxyId]->moved = false;
+    }
+
+    /// Get the fat AABB for a proxy.
+    public function GetFatAABB(int $proxyId): AABB
+    {
+        Assert::true(0 <= $proxyId && $proxyId < count($this->nodes));
+        return $this->nodes[$proxyId]->aabb;
+    }
+
+    /// Query an AABB for overlapping proxies. The callback class
+    /// is called for each proxy that overlaps the supplied AABB.
+    /**
+     * @param \Closure $callback
+     */
+    public function Query(\Closure $callback, AABB $aabb): void
+    {
+        // TODO
+        $stack = new \SplStack;
+        $stack->push($this->root);
+
+        while($stack->count() > 0) {
+            $nodeId = $stack->pop();
+            if ($nodeId === null) {
+                continue;
+            }
+
+            $node = $this->nodes[$nodeId];
+
+            if (b2TestOverlap($node->aabb, $aabb)) {
+                if ($node->IsLeaf()) {
+                    $proceed = $callback($nodeId);
+
+                    if ($proceed === false) {
+                        return;
+                    }
+                } else {
+                    $stack->push($node->child1);
+                    $stack->push($node->child2);
+                }
+            }
+        }
+    }
+
+    /// Ray-cast against the proxies in the tree. This relies on the callback
+    /// to perform a exact ray-cast in the case were the proxy contains a shape.
+    /// The callback also performs the any collision filtering. This has performance
+    /// roughly equal to k * log(n), where k is the number of collisions and n is the
+    /// number of proxies in the tree.
+    /// @param input the ray-cast input data. The ray extends from p1 to p1 + maxFraction * (p2 - p1).
+    /// @param callback a callback class that is called for each proxy that is hit by the ray.
+    public function RayCast(\Closure $callback, RayCastInput $input): void
+    {
+        $p1 = $input->p1;
+        $p2 = $input->p2;
+        $r = $p2->Subtract($p1);
+
+        Assert::greaterThan($r->LengthSquared(), 0.0, "Invalid input: LengthSquared is not greater than 0.0");
+
+        $r->Normalize();
+
+        // v is perpendicular to the segment.
+        $v = Math::Cross(1.0, $r);
+        $abs_v = Math::Abs($v);
+
+        // Separating axis for segment (Gino, p80).
+        // |dot(v, p1 - c)| > dot(|v|, h)
+
+        $maxFraction = $input->maxFraction;
+
+        $segmentAABB = new AABB();
+
+        $t = $p1->Add($r->Multiply($maxFraction));
+        $segmentAABB->lowerBound = Math::Min($p1, $t);
+        $segmentAABB->upperBound = Math::Max($p1, $t);
+
+        $stack = new \SplStack;
+        $stack->Push($this->root);
+
+        while ($stack->count() > 0) {
+            $nodeId = $stack->pop();
+
+            if ($nodeId == null) {
+                continue;
+            }
+
+            $node = $this->nodes[$nodeId];
+
+            if (!b2TestOverlap($node->aabb, $segmentAABB)) {
+                continue;
+            }
+
+            $c = $node->aabb->GetCenter();
+            $h = $node->aabb->GetExtents();
+            $separation = $v->Dot($p1->Subtract($c))->Abs() - $abs_v->Dot($h);
+
+            if ($separation > 0.0) {
+                continue;
+            }
+
+            if ($node->IsLeaf()) {
+                $subInput = new b2RayCastInput();
+                $subInput->p1 = $input->p1;
+                $subInput->p2 = $input->p2;
+                $subInput->maxFraction = $maxFraction;
+
+                $value = $callback->RayCastCallback($subInput, $nodeId);
+
+                if ($value == 0.0) {
+                    return;
+                }
+
+                if ($value > 0.0) {
+                    $maxFraction = $value;
+                    $t = $p1->Add($r->Multiply($maxFraction));
+                    $segmentAABB->lowerBound = b2Min($p1, $t);
+                    $segmentAABB->upperBound = b2Max($p1, $t);
+                }
+            } else {
+                $stack->Push($node->child1);
+                $stack->Push($node->child2);
+            }
+        }
     }
 
     private function AllocateNode()

@@ -10,24 +10,30 @@ class Math
         return \is_finite($x);
     }
 
-    /**
-     * @param float|int $a
-     * @param float|int $b
-     * @return float|int
-     */
-    public static function Min($a, $b)
+    public static function Min(float|int|Vec2 $a, float|int|Vec2 $b): float|int|Vec2
     {
-        return $a < $b ? $a : $b;
+        if (!$a instanceof Vec2 && !$b instanceof Vec2) {
+            return $a < $b ? $a : $b;
+        }
+
+        if ($a instanceof Vec2 && $b instanceof Vec2) {
+            return new Vec2(Math::Min($a->x, $b->x), Math::Min($a->y, $b->y));
+        }
+
+        throw new \Exception('unsupported yet, code to write');
     }
 
-    /**
-     * @param float|int $a
-     * @param float|int $b
-     * @return float|int
-     */
-    public static function Max($a, $b)
+    public static function Max(float|int|Vec2 $a, float|int|Vec2 $b): float|int|Vec2
     {
-        return $a > $b ? $a : $b;
+        if (!$a instanceof Vec2 && !$b instanceof Vec2) {
+            return $a > $b ? $a : $b;
+        }
+
+        if ($a instanceof Vec2 && $b instanceof Vec2) {
+            return new Vec2(Math::Max($a->x, $b->x), Math::Max($a->y, $b->y));
+        }
+
+        throw new \Exception('unsupported yet, code to write');
     }
 
 
@@ -57,14 +63,16 @@ class Math
 	    return new Vec2($x, $y);
     }
 
-    /**
-     * @param Vec2|float $a
-     * @param Vec2 $b
-     *
-     * @return float|Vec2
-     * @throws \Exception
-     */
-    public static function Cross($a, $b)
+    public static function Abs(int|float|Vec2 $a)
+    {
+        if (!$a instanceof Vec2) {
+            return abs($a);
+        }
+
+        return new Vec2(abs($a->x), abs($a->y));
+    }
+
+    public static function Cross(Vec2|float $a, Vec2 $b): float|Vec2
     {
         if ($a instanceof Vec2) {
             if ($b instanceof Vec2) {
@@ -83,7 +91,7 @@ class Math
     {
         return $a->x * $b->y - $a->y * $b->x;
     }
-    private static function CrossFloatWithVec2(float $s, Vec2 $a)
+    private static function CrossFloatWithVec2(float $s, Vec2 $a): Vec2
     {
         return new Vec2(-$s * $a->y, $s * $a->x);
     }

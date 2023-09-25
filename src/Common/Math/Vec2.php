@@ -2,6 +2,8 @@
 
 namespace Box2d\Common\Math;
 
+use Box2d\Common\Common;
+use function Box2d\Common\IsValid;
 
 class Vec2
 {
@@ -42,7 +44,7 @@ class Vec2
         return new Vec2();
     }
 
-    public function Mult(float $a): self
+    public function Multiply(float $a): self
     {
         $this->x *= $a;
         $this->y *= $a;
@@ -58,7 +60,7 @@ class Vec2
         return $this;
     }
 
-    public function Sub(Vec2 $v): self
+    public function Subtract(Vec2 $v): self
     {
         $this->x -= $v->x;
         $this->y -= $v->y;
@@ -66,15 +68,54 @@ class Vec2
         return $this;
     }
 
-
-    public function IsValid()
-    {
-        return \is_finite($this->x) && \is_finite($this->y);
-    }
-
     public function SetZero()
     {
         $this->x = 0.0;
         $this->y = 0.0;
+    }
+
+    /// Get the length squared. For performance, use this instead of
+    /// b2Vec2::Length (if possible).
+    public function LengthSquared(): float
+	{
+		return $this->x * $this->x + $this->y * $this->y;
+	}
+
+    /// Get the length of this vector (the norm).
+    public function Length(): float
+    {
+        return sqrt($this->x * $this->x + $this->y * $this->y);
+    }
+
+    public function Normalize(): float
+    {
+        $length = $this->Length();
+
+        if ($length < Common::epsilon) {
+            return 0.0;
+        }
+
+        $invLength = 1.0 / $length;
+        $this->x *= $invLength;
+        $this->y *= $invLength;
+
+        return $length;
+    }
+
+    /// Does this vector contain finite coordinates?
+    public function IsValid(): bool
+	{
+		return IsValid($this->x) && IsValid($this->y);
+	}
+
+    /// Get the skew vector such that dot(skew_vec, other) == cross(vec, other)
+    public function Skew(): Vec2
+    {
+        return new Vec2(-$this->y, $this->x);
+    }
+
+    public function Negate(): Vec2
+    {
+        return new Vec2(-$this->x, -$this->y);
     }
 }

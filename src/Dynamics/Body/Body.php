@@ -219,7 +219,7 @@ class Body
             $massData = new MassData();
             $f->GetMassData($massData);
             $this->mass += $massData->mass;
-            $localCenter->Add($massData->center->Mult($massData->mass));
+            $localCenter->Add($massData->center->Multiply($massData->mass));
             $this->I += $massData->I;
         }
 
@@ -227,7 +227,7 @@ class Body
         if ($this->mass > 0.0)
         {
             $this->invMass = 1.0 / $this->mass;
-            $localCenter->Mult($this->invMass);
+            $localCenter->Multiply($this->invMass);
         }
 
         if ($this->I > 0.0 && ($this->flags & self::FLAG_FIXED_ROTATION) == 0)

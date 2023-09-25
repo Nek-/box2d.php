@@ -28,6 +28,41 @@ class AABB
 
 	    $this->doubleCombine($aabb, $aabb2);
 	}
+
+    public function GetCenter(): Vec2
+    {
+        return $this->lowerBound->Add($this->upperBound)->Multiply(0.5);
+    }
+
+    public function GetExtents(): Vec2
+    {
+        return $this->upperBound->Subtract($this->lowerBound)->Multiply(0.5);
+    }
+
+    public function IsValid(): bool
+    {
+        $d = $this->upperBound->Subtract($this->lowerBound);
+        $valid = $d->x >= 0.0 && $d->y >= 0.0;
+
+        return $valid && $this->lowerBound->IsValid() && $this->upperBound->IsValid();
+    }
+
+    public function TestOverlap(AABB $a, AABB $b):bool
+    {
+        $d1 = $a->lowerBound->Subtract($a->upperBound);
+        $d2 = $b->lowerBound->Subtract($b->upperBound);
+
+        if ($d1->x > 0.0 || $d1->y > 0.0) {
+            return false;
+        }
+
+	    if ($d2->x > 0.0 || $d2->y > 0.0) {
+            return false;
+        }
+
+	    return true;
+    }
+
     /// Combine an AABB into this one.
 	private function simpleCombine(AABB $aabb)
     {

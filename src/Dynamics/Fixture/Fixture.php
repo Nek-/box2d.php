@@ -3,6 +3,7 @@
 namespace Box2d\Dynamics\Fixture;
 
 
+use Box2d\Collision\Collision\AABB;
 use Box2d\Dynamics\Fixture\Filter;
 use Box2d\Collision\BroadPhase\BroadPhase;
 use Box2d\Collision\Shape\MassData;
@@ -66,12 +67,27 @@ class Fixture
         $this->proxies = [];
         for ($i = 0; $i < $childCount; ++$i)
         {
-            $this->proxies[$i] = new FixtureProxy;
+            $this->proxies[$i] = new FixtureProxy(new AABB);
             $this->proxies[$i]->fixture = null;
             $this->proxies[$i]->proxyId = BroadPhase::NULL_PROXY;
         }
 
         $this->density = $def->density;
+    }
+
+    public function Destroy()
+    {
+        Assert::count($this->proxies, 0);
+        $this->proxies = null;
+        $this->shape = null;
+        $this->body = null;
+    }
+
+    public function DestroyProxies(BroadPhase $broadPhase)
+    {
+        foreach ($this->proxies as $proxy) {
+            $broadPhase->DestroyProxy($proxy);
+        }
     }
 
     public function CreateProxies(BroadPhase $broadPhase, Transform $xf)
@@ -83,7 +99,7 @@ class Fixture
 
         for ($i = 0; $i < $proxyCount; ++$i)
         {
-            $proxy = new FixtureProxy();
+            $proxy = new FixtureProxy(new AABB);
             $this->shape->ComputeAABB($proxy->aabb, $xf, $i);
             $proxy->proxyId = $broadPhase->CreateProxy($proxy->aabb, $proxy);
             $proxy->fixture = $this;
