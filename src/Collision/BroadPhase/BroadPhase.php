@@ -5,13 +5,15 @@ namespace Box2d\Collision\BroadPhase;
 
 use Box2d\Collision\BroadPhase\Pair;
 use Box2d\Collision\Collision\AABB;
+use Box2d\Collision\Collision\RayCastInput;
 use Box2d\Collision\DynamicTree\DynamicTree;
+use Box2d\Collision\DynamicTree\QueryCallbackInterface;
 use Box2d\Common\Math\Vec2;
 
 /**
  * @template T
  */
-class BroadPhase
+class BroadPhase implements QueryCallbackInterface
 {
     public const NULL_PROXY = -1;
     //friend class b2DynamicTree;
@@ -189,7 +191,7 @@ class BroadPhase
         // TODO
     }
 
-    private function QueryCallback(int $proxyId): bool
+    public function QueryCallback(int $proxyId): bool
     {
         // TODO
     }

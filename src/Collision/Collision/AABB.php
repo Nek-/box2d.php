@@ -63,6 +63,18 @@ class AABB
 	    return true;
     }
 
+    public function Contains(AABB $aabb): bool
+    {
+        $result = true;
+
+        $result = $result && $this->lowerBound->x <= $aabb->lowerBound->x;
+        $result = $result && $this->lowerBound->y <= $aabb->lowerBound->y;
+        $result = $result && $aabb->upperBound->x <= $this->upperBound->x;
+        $result = $result && $aabb->upperBound->y <= $this->upperBound->y;
+
+        return $result;
+    }
+
     /// Combine an AABB into this one.
 	private function simpleCombine(AABB $aabb)
     {

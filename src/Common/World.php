@@ -3,6 +3,8 @@
 namespace Box2d\src\Common;
 
 
+use Box2d\Collision\DynamicTree\QueryCallbackInterface;
+use Box2d\Collision\DynamicTree\RayCastCallbackInterface;
 use Box2d\Common\Joint;
 use Box2d\Common\Timer;
 use Box2d\Common\TimeStep;
@@ -42,7 +44,7 @@ use const Box2d\Common\timer;
 use const Box2d\Common\velocityIterations;
 use const Box2d\Common\warmStarting;
 
-class World
+class World implements RayCastCallbackInterface, QueryCallbackInterface
 {
     //friend class b2Body;
     //friend class b2Fixture;

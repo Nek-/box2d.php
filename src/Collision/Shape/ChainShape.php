@@ -6,6 +6,7 @@ namespace Box2d\Collision\Shape;
 use Box2d\Collision\Collision\AABB;
 use Box2d\Collision\Collision\RayCastInput;
 use Box2d\Collision\Collision\RayCastOutput;
+use Box2d\Common\Common;
 use Box2d\Common\Math\Transform;
 use Box2d\Common\Math\Vec2;
 use Box2d\Common\Settings;
@@ -37,7 +38,7 @@ class ChainShape extends Shape
         for ($i = 1; $i < $count; ++$i) {
             $v1 = $vertices[$i-1];
             $v2 = $vertices[$i];
-            Assert::true(Vec2::DistanceSquared($v1, $v2) > Settings::linearSlop * Settings::linearSlop, 'If the code crashes here, it means your vertices are too close together.');
+            Assert::true(Vec2::DistanceSquared($v1, $v2) > Common::linearSlop * Common::linearSlop, 'If the code crashes here, it means your vertices are too close together.');
         }
 
         foreach ($vertices as $vertex) {

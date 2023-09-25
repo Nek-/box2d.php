@@ -4,12 +4,17 @@ namespace Box2d\Common;
 
 use Box2d\Settings as GlobalSettings;
 
+//const VERSION = new class () {
+//    public const major = 2;
+//    public const minor = 4;
+//
+//    public const revision = 1;
+//
+//    public function __toString(): string
+//    {
+//        return self::major .'.'. self::minor . '.' . self::revision;
+//    }
+//};
 class Settings
 {
-    public const linearSlop = 0.005 * GlobalSettings::lengthUnitsPerMeter;
-
-    /// This is used to fatten AABBs in the dynamic tree. This allows proxies
-    /// to move by a small amount without triggering a tree adjustment.
-    /// This is in meters.
-    public const aabbExtension = 0.1 * GlobalSettings::lengthUnitsPerMeter;
 }

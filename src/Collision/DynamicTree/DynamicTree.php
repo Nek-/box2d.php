@@ -13,6 +13,7 @@ namespace Box2d\Collision\DynamicTree;
 /// Nodes are pooled and relocatable, so we use node indices rather than pointers.
 use Box2d\Collision\Collision\AABB;
 use Box2d\Collision\Collision\RayCastInput;
+use Box2d\Common\Common;
 use Box2d\Common\Math\Math;
 use Box2d\Common\Math\Vec2;
 use Box2d\Common\Settings;
@@ -65,8 +66,8 @@ class DynamicTree
         $proxyId = $this->AllocateNode();
 
         // Fatten the aabb.
-        $r_x = Settings::aabbExtension;
-        $r_y = Settings::aabbExtension;
+        $r_x = Common::aabbExtension;
+        $r_y = Common::aabbExtension;
         $this->nodes[$proxyId]->aabb->lowerBound->x = $aabb->lowerBound->x - $r_x;
         $this->nodes[$proxyId]->aabb->lowerBound->y = $aabb->lowerBound->y - $r_y;
         $this->nodes[$proxyId]->aabb->upperBound->x = $aabb->upperBound->x + $r_x;
@@ -368,9 +369,58 @@ class DynamicTree
     /// then the proxy is removed from the tree and re-inserted. Otherwise
     /// the function returns immediately.
     /// @return true if the proxy was re-inserted.
-    public function MoveProxy(int $proxyId, AABB $aabb1, Vec2 $displacement): bool
+    public function MoveProxy(int $proxyId, AABB $aabb, Vec2 $displacement): bool
     {
-        // TODO
+        Assert::greaterThanEq($proxyId, 0);
+        Assert::lessThan($proxyId, count($this->nodes));
+        Assert::true($this->nodes[$proxyId]->IsLeaf());
+
+        // Extend AABB
+        $fatAABB = new AABB();
+        $r = new Vec2(Common::aabbExtension, Common::aabbExtension);
+        $fatAABB->lowerBound = $aabb->lowerBound->Subtract($r);
+        $fatAABB->upperBound = $aabb->upperBound->Add($r);
+
+        // Predict AABB movement
+        $d = $displacement->Multiply(Common::aabbMultiplier);
+
+        if ($d->x < 0.0) {
+            $fatAABB->lowerBound->x += $d->x;
+        } else {
+            $fatAABB->upperBound->x += $d->x;
+        }
+
+        if ($d->y < 0.0) {
+            $fatAABB->lowerBound->y += $d->y;
+        } else {
+            $fatAABB->upperBound->y += $d->y;
+        }
+
+        $treeAABB = $this->nodes[$proxyId]->aabb;
+
+        if ($treeAABB->Contains($aabb)) {
+            // The tree AABB still contains the object, but it might be too large.
+            // Perhaps the object was moving fast but has since gone to sleep.
+            // The huge AABB is larger than the new fat AABB.
+            $hugeAABB = new AABB();
+            $hugeAABB->lowerBound = $fatAABB->lowerBound->Subtract(new Vec2(4.0 * Common::aabbExtension, 4.0 * Common::aabbExtension));
+            $hugeAABB->upperBound = $fatAABB->upperBound->Add(new Vec2(4.0 * Common::aabbExtension, 4.0 * Common::aabbExtension));
+
+            if ($hugeAABB->Contains($treeAABB)) {
+                // The tree AABB contains the object AABB and the tree AABB is
+                // not too large. No tree update needed.
+                return false;
+            }
+
+            // Otherwise, the tree AABB is huge and needs to be shrunk.
+        }
+
+        $this->RemoveLeaf($proxyId);
+        $this->nodes[$proxyId]->aabb = $fatAABB;
+        $this->InsertLeaf($proxyId);
+        $this->nodes[$proxyId]->moved = true;
+
+        return true;
     }
 
 
@@ -404,12 +454,8 @@ class DynamicTree
 
     /// Query an AABB for overlapping proxies. The callback class
     /// is called for each proxy that overlaps the supplied AABB.
-    /**
-     * @param \Closure $callback
-     */
-    public function Query(\Closure $callback, AABB $aabb): void
+    public function Query(QueryCallbackInterface $callback, AABB $aabb): void
     {
-        // TODO
         $stack = new \SplStack;
         $stack->push($this->root);
 
@@ -423,7 +469,7 @@ class DynamicTree
 
             if (b2TestOverlap($node->aabb, $aabb)) {
                 if ($node->IsLeaf()) {
-                    $proceed = $callback($nodeId);
+                    $proceed = $callback->QueryCallback($nodeId);
 
                     if ($proceed === false) {
                         return;
@@ -443,7 +489,7 @@ class DynamicTree
     /// number of proxies in the tree.
     /// @param input the ray-cast input data. The ray extends from p1 to p1 + maxFraction * (p2 - p1).
     /// @param callback a callback class that is called for each proxy that is hit by the ray.
-    public function RayCast(\Closure $callback, RayCastInput $input): void
+    public function RayCast(RayCastCallbackInterface $callback, RayCastInput $input): void
     {
         $p1 = $input->p1;
         $p2 = $input->p2;
@@ -486,14 +532,14 @@ class DynamicTree
 
             $c = $node->aabb->GetCenter();
             $h = $node->aabb->GetExtents();
-            $separation = $v->Dot($p1->Subtract($c))->Abs() - $abs_v->Dot($h);
+            $separation = Math::Abs(Math::Dot($v, $p1->Subtract($c))) - Math::Dot($abs_v, $h);
 
             if ($separation > 0.0) {
                 continue;
             }
 
             if ($node->IsLeaf()) {
-                $subInput = new b2RayCastInput();
+                $subInput = new RayCastInput();
                 $subInput->p1 = $input->p1;
                 $subInput->p2 = $input->p2;
                 $subInput->maxFraction = $maxFraction;
@@ -506,15 +552,20 @@ class DynamicTree
 
                 if ($value > 0.0) {
                     $maxFraction = $value;
-                    $t = $p1->Add($r->Multiply($maxFraction));
-                    $segmentAABB->lowerBound = b2Min($p1, $t);
-                    $segmentAABB->upperBound = b2Max($p1, $t);
+                    $t = $p1->Add(($p2->Subtract($p1))->Multiply($maxFraction));
+                    $segmentAABB->lowerBound = Math::Min($p1, $t);
+                    $segmentAABB->upperBound = Math::Max($p1, $t);
                 }
             } else {
-                $stack->Push($node->child1);
-                $stack->Push($node->child2);
+                $stack->push($node->child1);
+                $stack->push($node->child2);
             }
         }
+    }
+
+    public function RemoveLeaf(int $leaf)
+    {
+        // TODO
     }
 
     private function AllocateNode()
