@@ -27,12 +27,13 @@ use function Box2d\Common\Cross;
 class DynamicTree
 {
     public const NULL_NODE = -1;
+    private const DEFAULT_CAPACITY = 16;
     private int $root;
 
     /** @var TreeNode[] */
     private array $nodes;
-//    private int $nodeCount = 0;
-//    private int $nodeCapacity = 16;
+//    private int $nodeCount;
+//    private int $nodeCapacity = self::DEFAULT_CAPACITY;
 //    private int $freeList;
 
     private int $insertionCount;
@@ -42,18 +43,19 @@ class DynamicTree
         $this->root = self::NULL_NODE;
 
         $this->nodes = [];
+//        $this->nodeCount = 0;
 
         // Build a linked list for the free list.
         // 15 is nodeCapacity - 1
-        for ($i = 0; $i < 15; ++$i)
-        {
-            $this->nodes[$i] = new TreeNode();
-            $this->nodes[$i]->next = $i + 1;
-            $this->nodes[$i]->height = -1;
-        }
-        $this->nodes[15]->next = self::NULL_NODE;
-        $this->nodes[15]->height = -1;
-        $this->freeList = 0;
+//        for ($i = 0; $i < self::DEFAULT_CAPACITY; ++$i)
+//        {
+//            $this->nodes[$i] = new TreeNode();
+//            $this->nodes[$i]->next = $i + 1;
+//            $this->nodes[$i]->height = -1;
+//        }
+//        $this->nodes[15]->next = self::NULL_NODE;
+//        $this->nodes[15]->height = -1;
+//        $this->freeList = 0;
 
         $this->insertionCount = 0;
     }
@@ -66,12 +68,9 @@ class DynamicTree
         $proxyId = $this->AllocateNode();
 
         // Fatten the aabb.
-        $r_x = Common::aabbExtension;
-        $r_y = Common::aabbExtension;
-        $this->nodes[$proxyId]->aabb->lowerBound->x = $aabb->lowerBound->x - $r_x;
-        $this->nodes[$proxyId]->aabb->lowerBound->y = $aabb->lowerBound->y - $r_y;
-        $this->nodes[$proxyId]->aabb->upperBound->x = $aabb->upperBound->x + $r_x;
-        $this->nodes[$proxyId]->aabb->upperBound->y = $aabb->upperBound->y + $r_y;
+        $r = new Vec2(Common::aabbExtension,Common::aabbExtension);
+        $this->nodes[$proxyId]->aabb->lowerBound = $aabb->lowerBound->Subtract($r);
+        $this->nodes[$proxyId]->aabb->upperBound = $aabb->upperBound->Add($r);
         $this->nodes[$proxyId]->userData = $userData;
         $this->nodes[$proxyId]->height = 0;
         $this->nodes[$proxyId]->moved = true;
@@ -565,13 +564,70 @@ class DynamicTree
 
     public function RemoveLeaf(int $leaf)
     {
-        // TODO
+        if ($leaf === $this->root) {
+            $this->root = self::NULL_NODE;
+            return;
+        }
+
+        $parent = $this->nodes[$leaf]->parent;
+        $grandParent = $this->nodes[$parent]->parent;
+
+        if ($this->nodes[$parent]->child1 == $leaf) {
+            $sibling = $this->nodes[$parent]->child2;
+        } else {
+            $sibling = $this->nodes[$parent]->child1;
+        }
+
+        if ($grandParent !== self::NULL_NODE) {
+            // Destroy parent and connect sibling to grandParent.
+            if ($this->nodes[$grandParent]->child1 == $parent) {
+                $this->nodes[$grandParent]->child1 = $sibling;
+            } else {
+                $this->nodes[$grandParent]->child2 = $sibling;
+            }
+
+            $this->nodes[$sibling]->parent = $grandParent;
+            $this->FreeNode($parent);
+
+            // Adjust ancestor bounds.
+            $index = $grandParent;
+            while ($index !== self::NULL_NODE) {
+                $index = $this->Balance($index);
+
+                $child1 = $this->nodes[$index]->child1;
+                $child2 = $this->nodes[$index]->child2;
+
+                $this->nodes[$index]->aabb->Combine($this->nodes[$child1]->aabb, $this->nodes[$child2]->aabb);
+                $this->nodes[$index]->height = 1 + Math::Max($this->nodes[$child1]->height, $this->nodes[$child2]->height);
+
+                $index = $this->nodes[$index]->parent;
+            }
+        } else {
+            $this->root = $sibling;
+            $this->nodes[$sibling]->parent = self::NULL_NODE;
+            $this->FreeNode($parent);
+        }
+
+        // Validate();
     }
 
-    private function AllocateNode()
+    private function FreeNode(int $nodeId): void
+    {
+        Assert::true(0 <= $nodeId && $nodeId < count($this->nodes));
+//        $this->nodes[$nodeId]->next = $this->freeList;
+        $this->nodes[$nodeId]->next = $this->freeList;
+        $this->nodes[$nodeId]->height = -1;
+//        $this->freeList = $nodeId;
+//        $this->nodeCount--;
+    }
+
+    private function AllocateNode(): int
     {
         $id = \count($this->nodes);
         $this->nodes[] = new TreeNode();
+        if ($id !== 0) {
+            $this->nodes[$id-1]->next = $id;
+        }
 
         return $id;
     }

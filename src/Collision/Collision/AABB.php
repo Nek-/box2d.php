@@ -10,6 +10,14 @@ class AABB
     public Vec2 $lowerBound; ///< the lower vertex
     public Vec2 $upperBound; ///< the upper vertex
 
+    public function __construct()
+    {
+        // Note: this may be anti-performant and useless
+        // trying to remove those 2 lines may be a good idea.
+        $this->upperBound = new Vec2();
+        $this->lowerBound = new Vec2();
+    }
+
     /// Get the perimeter length
     public function GetPerimeter(): float
 	{

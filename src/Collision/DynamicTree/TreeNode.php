@@ -28,6 +28,7 @@ class TreeNode
         $this->next = DynamicTree::NULL_NODE;
         $this->child1 = DynamicTree::NULL_NODE;
         $this->child2 = DynamicTree::NULL_NODE;
+        $this->aabb = new AABB();
         $this->height = 0;
         $this->userData = null;
         $this->moved = false;
